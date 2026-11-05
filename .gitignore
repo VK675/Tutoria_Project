@@ -1,0 +1,11 @@
+# Секреты: никогда не коммитим
+.env
+*serviceAccount*.json
+*adminsdk*.json
+
+# Служебные файлы Firebase
+.firebase/
+firebase-debug.log
+
+# Зависимости, если появится npm
+node_modules/
