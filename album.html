@@ -6,22 +6,69 @@
   <meta name="robots" content="noindex">
   <title>Porto trip album</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="album.css">
   <script type="module" src="album.js"></script>
+  <script type="module" src="admin.js"></script>
 </head>
-<body>
-  <main>    
-    <form id="login-form">
-      <h1>Sign in</h1>
-      <input id="email" type="email" placeholder="Email" required>
-      <input id="password" type="password" placeholder="Password" required>
-      <button type="submit">Sign in</button>
-      <p id="login-error"></p>
+<body class="album-page">
+
+  <header class="nav">
+    <a href="index.html" class="logo">Porto</a>
+    <nav>
+      <a href="index.html">Back to the trip</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Вход. hidden стоит сразу: форму покажет album.js, когда Firebase
+         проверит вход. Иначе вошедший пользователь видел бы её вспышку. -->
+    <form id="login-form" class="login" hidden>
+      <img class="login-bg" src="img/river.webp" alt="">
+      <div class="login-card">
+        <h1>Sign in</h1>
+        <p class="login-hint">Use the account you got for the class trip.</p>
+        <input id="email" type="email" placeholder="Email" autocomplete="email" required>
+        <input id="password" type="password" placeholder="Password" autocomplete="current-password" required>
+        <button class="btn" type="submit">Sign in</button>
+        <p id="login-error" class="form-error" role="alert"></p>
+      </div>
     </form>
 
-    <section id="album-section" hidden>
-      <h1>Album</h1>
-      <p>Signed in as <span id="user-email"></span></p>
-      <button id="sign-out" type="button">Sign out</button>
+    <!-- Альбом: виден только после входа -->
+    <section id="album-section" class="album" hidden>
+      <header class="album-head">
+        <div>
+          <p class="album-kicker">Class trip · Porto</p>
+          <h1>Album</h1>
+          <p class="album-user">Signed in as <span id="user-email"></span></p>
+        </div>
+        <button id="sign-out" class="btn btn-quiet" type="button">Sign out</button>
+      </header>
+
+      <form id="upload-form" class="upload">
+        <div class="upload-text">
+          <h2>Add a photo</h2>
+          <p>It appears in the album after approval.</p>
+        </div>
+        <input id="photo-input" type="file" accept="image/*" required>
+        <button class="btn" type="submit">Upload photo</button>
+        <p id="upload-status" class="upload-status" role="status"></p>
+      </form>
+
+      <!-- Модерация: видна только админу (код в admin.js) -->
+      <div id="admin-section" class="admin" hidden>
+        <h2>Waiting for approval</h2>
+        <p id="admin-status" class="admin-status" role="status"></p>
+        <div id="pending-list" class="gallery"></div>
+      </div>
+
+      <div class="gallery-block">
+        <h2>Photos</h2>
+        <!-- Сюда JS будет добавлять фото -->
+        <div id="gallery" class="gallery"></div>
+        <p id="gallery-empty" class="gallery-empty">No photos yet. Be the first to add one.</p>
+        <button id="load-more" class="btn btn-quiet load-more" type="button" hidden>Load more</button>
+      </div>
     </section>
   </main>
 </body>
