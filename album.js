@@ -2,8 +2,14 @@ import { auth, db } from "./firebase.js";
 import {
   addDoc,
   collection,
+  getDocs,
+  limit,
+  query,
   serverTimestamp,
-} from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";import {
+  startAfter,
+  where,
+} from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut
@@ -12,10 +18,20 @@ import {
 const form = document.getElementById("login-form");
 const errorText = document.getElementById("login-error");
 const album = document.getElementById("album-section");
+const gallery = document.getElementById("gallery");
+const galleryEmpty = document.getElementById("gallery-empty");
+const loadMoreButton = document.getElementById("load-more");
+
+const PAGE_SIZE = 12; // сколько фото грузим за раз: экономим лимит трафика Firestore
+let lastPhoto = null; // последнее загруженное фото: следующая порция начнётся после него
 
 onAuthStateChanged(auth, function (user) {
+  // Очищаем при любой смене пользователя: после выхода фото не должны остаться на странице
+  resetGallery();
+
   if (user) {
     document.getElementById("user-email").textContent = user.email;
+    loadGallery();
   }
   form.hidden = user !== null;
   album.hidden = user === null;
@@ -90,3 +106,56 @@ async function compressImage(file) {
 
   return canvas.toDataURL("image/jpeg", 0.8);
 }
+
+function resetGallery() {
+  gallery.replaceChildren();
+  lastPhoto = null;
+  loadMoreButton.hidden = true;
+  galleryEmpty.textContent = "No photos yet. Be the first to add one.";
+  galleryEmpty.hidden = false;
+}
+
+async function loadGallery() {
+  loadMoreButton.disabled = true;
+
+  try {
+    const filters = [where("status", "==", "approved"), limit(PAGE_SIZE)];
+    if (lastPhoto !== null) {
+      filters.push(startAfter(lastPhoto));
+    }
+
+    const snapshot = await getDocs(query(collection(db, "photos"), ...filters));
+
+    snapshot.forEach(function (photoDoc) {
+      gallery.append(createPhoto(photoDoc));
+    });
+
+    if (!snapshot.empty) {
+      lastPhoto = snapshot.docs[snapshot.docs.length - 1];
+    }
+
+    // Пришла неполная порция — значит, больше фото нет
+    loadMoreButton.hidden = snapshot.size < PAGE_SIZE;
+    galleryEmpty.hidden = gallery.children.length > 0;
+  } catch (error) {
+    galleryEmpty.textContent = "Could not load photos, please refresh the page";
+    galleryEmpty.hidden = false;
+    console.log(error.code, error.message);
+  }
+
+  loadMoreButton.disabled = false;
+}
+
+function createPhoto(photoDoc) {
+  const figure = document.createElement("figure");
+  figure.className = "photo";
+
+  const image = document.createElement("img");
+  image.src = photoDoc.data().image;
+  image.alt = "Trip photo";
+
+  figure.append(image);
+  return figure;
+}
+
+loadMoreButton.addEventListener("click", loadGallery);
