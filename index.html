@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Porto — Class Trip</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Leaflet — бесплатная библиотека для карт (нужен интернет) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+  <script type="module" src="firebase.js"></script>
+</head>
+<body>
+
+  <!-- Полоска прогресса скролла сверху -->
+  <div id="progress"></div>
+
+  <header class="nav">
+    <a href="#hero" class="logo">Porto</a>
+    <nav>
+      <a href="#map">Where</a>
+      <a href="#history">History</a>
+      <a href="#monuments">Monuments</a>
+      <a href="#food">Food</a>
+      <a href="#plan">2-day plan</a>
+    </nav>
+  </header>
+
+  <main>
+    <!--
+      КАК РАБОТАЕТ ЭФФЕКТ:
+      Секция с data-scroll очень высокая (например, 300vh), а внутри неё
+      есть блок .sticky высотой ровно в экран, который «прилипает».
+      Пока ты скроллишь секцию, экран стоит на месте, а JS считает
+      прогресс --p от 0 до 1 и по нему двигает/увеличивает/показывает элементы.
+    -->
+
+    <!-- 1. Обложка: картинка приближается, заголовок улетает -->
+    <section id="hero" class="chapter hero" data-scroll>
+      <div class="sticky">
+        <img class="bg" src="img/homepage.webp" alt="Sunset over the Douro river in Porto">
+        <div class="shade"></div>
+        <div class="hero-text">
+          <p class="kicker">Class trip · 2 days</p>
+          <h1>Porto</h1>
+          <p class="sub">The city that gave Portugal its name</p>
+          <p class="starts">Our trip starts in <span id="countdown"></span></p>
+        </div>
+        <p class="hero-second" data-from="0.45">Ready? Scroll down and fly into the city.</p>
+        <div class="scroll-hint">scroll ↓</div>
+      </div>
+    </section>
+
+    <!-- Карта: камера «летит» из Европы в Порту (код в script.js) -->
+    <section id="map" class="chapter where" data-scroll>
+      <div class="sticky">
+        <div id="leaflet-map"></div>
+        <div class="where-text">
+          <div class="where-step" data-from="0" data-to="0.33">
+            <p class="kicker">Where is it?</p>
+            <h2>Europe</h2>
+            <p>Porto is in the far south-west of Europe, on the Atlantic Ocean.</p>
+          </div>
+          <div class="where-step" data-from="0.33" data-to="0.66">
+            <p class="kicker">Where is it?</p>
+            <h2>Portugal</h2>
+            <p>It's the second biggest city in Portugal, in the north of the country — about 300 km from Lisbon.</p>
+          </div>
+          <div class="where-step" data-from="0.66">
+            <p class="kicker">Where is it?</p>
+            <h2>Porto</h2>
+            <p>The city sits on hills where the Douro river meets the ocean.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. История: факты появляются по очереди -->
+    <section id="history" class="chapter history" data-scroll>
+      <div class="sticky">
+        <img class="bg" src="img/history.jpg" alt="Old town of Porto seen across the Douro river">
+        <div class="shade"></div>
+        <div class="history-content">
+          <h2 data-from="0">A short history</h2>
+          <ol class="timeline">
+            <li data-from="0.12">
+              <span class="year">Roman times</span>
+              <p>A small port on the Douro called <b>Portus Cale</b>. Its name later became the name of the whole country: <b>Portugal</b>.</p>
+            </li>
+            <li data-from="0.32">
+              <span class="year">1415</span>
+              <p>The city gave all its meat to the ships of Prince Henry the Navigator and kept only the tripe. That's why people from Porto are still called <b>“tripeiros”</b>.</p>
+            </li>
+            <li data-from="0.52">
+              <span class="year">1756</span>
+              <p>The Douro valley became one of the first official wine regions in the world. <b>Port wine</b> made the city famous everywhere.</p>
+            </li>
+            <li data-from="0.72">
+              <span class="year">1996</span>
+              <p>The historic centre became a <b>UNESCO World Heritage Site</b>.</p>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Монументы: вертикальный скролл двигает ленту вбок -->
+    <section id="monuments" class="chapter monuments" data-scroll>
+      <div class="sticky">
+        <h2 class="monuments-title">Monuments</h2>
+        <div class="track" data-hscroll>
+          <article class="card">
+            <img src="img/bridge.jpg" alt="Dom Luís I bridge at night">
+            <div class="card-text">
+              <span class="year">1886</span>
+              <h3>Dom Luís I Bridge</h3>
+              <p>Two-level iron bridge over the Douro, designed by a partner of Gustave Eiffel. Walk across the top level for the best view.</p>
+            </div>
+          </article>
+          <article class="card">
+            <img src="img/clerigos.jpg" alt="Clérigos Tower">
+            <div class="card-text">
+              <span class="year">1763</span>
+              <h3>Clérigos Tower</h3>
+              <p>About 75 m tall, for a long time the highest building in Portugal. Climb to the top to see the whole city.</p>
+            </div>
+          </article>
+          <article class="card">
+            <img src="img/lello.jpg" alt="Wooden staircase and ceiling of Livraria Lello">
+            <div class="card-text">
+              <span class="year">1906</span>
+              <h3>Livraria Lello</h3>
+              <p>One of the most beautiful bookshops in the world, with a famous red wooden staircase.</p>
+            </div>
+          </article>
+          <article class="card">
+            <img src="img/saobento.jpg" alt="Blue azulejo tiles in São Bento station">
+            <div class="card-text">
+              <span class="year">1916</span>
+              <h3>São Bento Station</h3>
+              <p>A train station decorated with about 20,000 blue-and-white azulejo tiles that show Portugal's history.</p>
+            </div>
+          </article>
+          <article class="card">
+            <img src="img/se.jpg" alt="Porto Cathedral above the old town">
+            <div class="card-text">
+              <span class="year">12th century</span>
+              <h3>Porto Cathedral (Sé)</h3>
+              <p>The oldest big building in the city. It looks more like a fortress than a church.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Еда: блюда сменяют друг друга -->
+    <section id="food" class="chapter food" data-scroll>
+      <div class="sticky">
+        <div class="food-images">
+          <img src="img/francesinha.jpg" alt="Francesinha" data-from="0"    data-to="0.33">
+          <img src="img/tripas.jpg"      alt="Tripas à moda do Porto" data-from="0.33" data-to="0.66">
+          <img src="img/bacalhau.jpg"    alt="Bacalhau à Gomes de Sá" data-from="0.66">
+        </div>
+        <div class="food-texts">
+          <p class="kicker">3 dishes you must try</p>
+          <div class="dish" data-from="0" data-to="0.33">
+            <span class="num">01</span>
+            <h3>Francesinha</h3>
+            <p>“Little French girl”: a huge sandwich with meat, ham and sausage, covered in melted cheese and a hot beer-and-tomato sauce. Usually with fries.</p>
+          </div>
+          <div class="dish" data-from="0.33" data-to="0.66">
+            <span class="num">02</span>
+            <h3>Tripas à moda do Porto</h3>
+            <p>Tripe stew with white beans — the dish that gave locals their nickname, “tripeiros”.</p>
+          </div>
+          <div class="dish" data-from="0.66">
+            <span class="num">03</span>
+            <h3>Bacalhau à Gomes de Sá</h3>
+            <p>Salted cod with potatoes, onion, eggs and olives. It was invented in Porto by a cod merchant called Gomes de Sá.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Дальше обычные секции, их заполним позже -->
+    <section id="plan" class="plain">
+      <h2 class="reveal">The 2-day plan</h2>
+      <!-- День 1 / День 2 -->
+    </section>
+
+    <section id="travel" class="plain">
+      <h2 class="reveal">Getting there &amp; budget</h2>
+    </section>
+
+    <section id="final" class="final">
+      <h2 class="reveal">So…<span>are we going?</span></h2>
+      <img class="reveal" src="img/river.webp" alt="People at cafés on the Ribeira riverside at dusk">
+    </section>
+  </main>
+
+  <footer>
+    <p>Made by me for class</p>
+    <details class="credits">
+      <summary>Photo credits</summary>
+      <ul>
+        <li>Sunset over the Douro, Ribeira at dusk — from r/CityPorn (Reddit)</li>
+        <li>Old town, Cathedral — Jakub Hałun, CC BY 4.0</li>
+        <li>Dom Luís I Bridge, Clérigos Tower — Diego Delso, CC BY-SA</li>
+        <li>Livraria Lello, São Bento — John Samuel, CC BY-SA 4.0</li>
+        <li>Francesinha — DgOlsen, CC BY-SA 4.0</li>
+        <li>Tripas — MariaCartas, CC BY-SA 3.0</li>
+        <li>Bacalhau à Gomes de Sá — Adriao, CC BY-SA 3.0</li>
+      </ul>
+    </details>
+  </footer>
+
+</body>
+</html>
