@@ -1,5 +1,6 @@
-// Блок альбома на главной: несколько одобренных фото, остальное на album.html
-import { db } from "./firebase.js";
+// Блок альбома на главной: те же карточки, что и на album.html, но только первые
+import { auth, db } from "./firebase.js";
+import { createPost } from "./post.js";
 import {
   collection,
   getDocs,
@@ -16,6 +17,12 @@ const empty = document.getElementById("home-empty");
 
 async function loadPreview() {
   try {
+    // Ждём, пока Firebase вспомнит вошедшего: от этого зависят лайк и форма комментария.
+    // Модерация только в альбоме, поэтому здесь админ — обычный участник.
+    await auth.authStateReady();
+    const user = auth.currentUser;
+    const viewer = { uid: user?.uid ?? null, role: user === null ? "guest" : "member" };
+
     const approved = query(
       collection(db, "photos"),
       where("status", "==", "approved"),
@@ -24,14 +31,7 @@ async function loadPreview() {
     const snapshot = await getDocs(approved);
 
     snapshot.forEach(function (photoDoc) {
-      const image = document.createElement("img");
-      image.src = photoDoc.data().image;
-      image.alt = "Trip photo";
-
-      const figure = document.createElement("figure");
-      figure.className = "photo";
-      figure.append(image);
-      gallery.append(figure);
+      gallery.append(createPost(photoDoc, viewer));
     });
 
     empty.hidden = !snapshot.empty;

@@ -1,10 +1,9 @@
-// Профиль участника: имя и аватар, которые класс видит рядом с комментариями.
-// Email на сайте никогда не показывается другим людям.
+// Форма профиля на album.html: участник задаёт себе имя и аватар
 import { db } from "./firebase.js";
 import { cropAvatar } from "./image.js";
-import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+import { createAvatar, getProfile, rememberProfile } from "./people.js";
+import { doc, setDoc } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
-const DEFAULT_NAME = "Classmate";
 const MAX_AVATAR_LENGTH = 60000; // тот же предел стоит в firestore.rules
 
 const editButton = document.getElementById("edit-profile");
@@ -15,45 +14,7 @@ const preview = document.getElementById("profile-preview");
 const profileStatus = document.getElementById("profile-status");
 const userName = document.getElementById("user-name");
 
-// Кэш: автор десяти комментариев скачивается один раз, а не десять.
-// Храним сам запрос (Promise), чтобы одновременные вызовы тоже не дублировались.
-const profiles = new Map();
 let currentAccount = null;
-
-export function getProfile(userId) {
-  if (!profiles.has(userId)) {
-    const request = getDoc(doc(db, "profiles", userId))
-      .then(function (snapshot) {
-        return snapshot.data() ?? {};
-      })
-      .catch(function (error) {
-        console.log(error.code, error.message);
-        return {};
-      });
-    profiles.set(userId, request);
-  }
-  return profiles.get(userId);
-}
-
-export function displayName(profile) {
-  return profile.name ?? DEFAULT_NAME;
-}
-
-// Круглый аватар. Нет фото — показываем первую букву имени.
-export function createAvatar(profile) {
-  if (profile.avatar) {
-    const image = document.createElement("img");
-    image.className = "avatar";
-    image.src = profile.avatar;
-    image.alt = "";
-    return image;
-  }
-
-  const letter = document.createElement("span");
-  letter.className = "avatar";
-  letter.textContent = [...displayName(profile)][0].toUpperCase(); // [...] не разрежет эмодзи пополам
-  return letter;
-}
 
 // Вызывается при каждой смене пользователя: настраивает шапку и форму профиля
 export async function showProfile(account) {
@@ -108,7 +69,7 @@ profileForm.addEventListener("submit", async function (event) {
 
     await setDoc(doc(db, "profiles", account.uid), newProfile);
 
-    profiles.set(account.uid, Promise.resolve(newProfile));
+    rememberProfile(account.uid, newProfile);
     fillForm(newProfile);
     photoInput.value = "";
     profileStatus.textContent = "Saved";

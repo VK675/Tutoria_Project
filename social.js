@@ -1,7 +1,7 @@
 // Лайки и комментарии под фото. Весь текст от людей выводим через textContent,
 // а не innerHTML: тогда браузер покажет <script> как буквы и не запустит его.
 import { auth } from "./firebase.js";
-import { createAvatar, displayName, getProfile } from "./profile.js";
+import { createAvatar, displayName, getProfile } from "./people.js";
 import {
   addDoc,
   collection,
@@ -18,6 +18,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
 const COMMENTS_LIMIT = 50;
+const SIGN_IN_PAGE = "album.html#sign-in"; // карточки есть и на главной, а вход только в альбоме
 
 // ================= Лайки =================
 
@@ -60,7 +61,7 @@ export function createLikeButton(photoRef, showError) {
   button.addEventListener("click", async function () {
     // Гость видит лайки, но поставить не может: отправляем его ко входу
     if (auth.currentUser === null) {
-      location.hash = "sign-in";
+      location.href = SIGN_IN_PAGE;
       return;
     }
 
@@ -124,12 +125,17 @@ export function createComments(photoRef, viewer, showError) {
       const total = await getCountFromServer(comments);
       count = total.data().count;
       showCount();
+
+      // Есть что почитать — показываем сразу, не заставляем искать кнопку
+      if (count > 0) {
+        await open();
+      }
     } catch (error) {
       console.log(error.code, error.message);
     }
   }
 
-  // Комментарии качаем только при открытии: так экономим лимит чтений Firestore
+  // Комментарии качаем только там, где они есть: экономим лимит чтений Firestore
   async function loadList() {
     // Берём самые новые, а показываем от старых к новым, как в переписке
     const newest = query(comments, orderBy("createdAt", "desc"), limit(COMMENTS_LIMIT));
@@ -237,7 +243,7 @@ export function createComments(photoRef, viewer, showError) {
 
   function createHint() {
     const link = document.createElement("a");
-    link.href = "#sign-in";
+    link.href = SIGN_IN_PAGE;
     link.textContent = "Sign in";
 
     const hint = document.createElement("p");
@@ -246,17 +252,25 @@ export function createComments(photoRef, viewer, showError) {
     return hint;
   }
 
-  toggle.addEventListener("click", async function () {
-    panel.hidden = !panel.hidden;
-    toggle.setAttribute("aria-expanded", !panel.hidden);
+  async function open() {
+    panel.hidden = false;
+    toggle.setAttribute("aria-expanded", "true");
+    if (loaded) return;
 
-    if (!panel.hidden && !loaded) {
-      try {
-        await loadList();
-      } catch (error) {
-        showError("Could not load comments, please try again");
-        console.log(error.code, error.message);
-      }
+    try {
+      await loadList();
+    } catch (error) {
+      showError("Could not load comments, please try again");
+      console.log(error.code, error.message);
+    }
+  }
+
+  toggle.addEventListener("click", function () {
+    if (panel.hidden) {
+      open();
+    } else {
+      panel.hidden = true;
+      toggle.setAttribute("aria-expanded", "false");
     }
   });
 

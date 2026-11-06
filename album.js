@@ -1,7 +1,7 @@
 import { auth, db } from "./firebase.js";
 import { compressImage } from "./image.js";
 import { showProfile } from "./profile.js";
-import { createComments, createLikeButton, deletePhoto } from "./social.js";
+import { createPost } from "./post.js";
 import {
   addDoc,
   collection,
@@ -158,7 +158,7 @@ async function loadGallery() {
     const snapshot = await getDocs(query(collection(db, "photos"), ...filters));
 
     snapshot.forEach(function (photoDoc) {
-      gallery.append(createPost(photoDoc));
+      gallery.append(createPost(photoDoc, viewer, showEmptyNote));
     });
 
     if (!snapshot.empty) {
@@ -167,7 +167,7 @@ async function loadGallery() {
 
     // Пришла неполная порция — значит, больше фото нет
     loadMoreButton.hidden = snapshot.size < PAGE_SIZE;
-    galleryEmpty.hidden = gallery.children.length > 0;
+    showEmptyNote();
   } catch (error) {
     galleryEmpty.textContent = "Could not load photos, please refresh the page";
     galleryEmpty.hidden = false;
@@ -177,66 +177,8 @@ async function loadGallery() {
   loadMoreButton.disabled = false;
 }
 
-// Карточка: фото, кнопки и раскрывающиеся комментарии
-function createPost(photoDoc) {
-  const image = document.createElement("img");
-  image.src = photoDoc.data().image;
-  image.alt = "Trip photo";
-
-  const figure = document.createElement("figure");
-  figure.className = "photo";
-  figure.append(image);
-
-  const post = document.createElement("article");
-  post.className = "post";
-
-  const errorLine = document.createElement("p");
-  errorLine.className = "form-error";
-  errorLine.setAttribute("role", "alert");
-
-  function showError(message) {
-    errorLine.textContent = message;
-  }
-
-  const comments = createComments(photoDoc.ref, viewer, showError);
-
-  const actions = document.createElement("div");
-  actions.className = "post-actions";
-  actions.append(createLikeButton(photoDoc.ref, showError), comments.toggle);
-
-  if (viewer.role === "admin") {
-    actions.append(createDeleteButton(photoDoc.ref, post, showError));
-  }
-
-  post.append(figure, actions, errorLine, comments.panel);
-  return post;
-}
-
-function createDeleteButton(photoRef, post, showError) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "post-action post-delete";
-  button.textContent = "Delete";
-
-  button.addEventListener("click", async function () {
-    // Удаление нельзя отменить, поэтому спрашиваем
-    if (!confirm("Delete this photo with its likes and comments for good?")) return;
-
-    button.disabled = true;
-    showError("");
-
-    try {
-      await deletePhoto(photoRef);
-      post.remove();
-      galleryEmpty.hidden = gallery.children.length > 0;
-    } catch (error) {
-      button.disabled = false;
-      showError("Could not delete the photo, please try again");
-      console.log(error.code, error.message);
-    }
-  });
-
-  return button;
+function showEmptyNote() {
+  galleryEmpty.hidden = gallery.children.length > 0;
 }
 
 loadMoreButton.addEventListener("click", loadGallery);

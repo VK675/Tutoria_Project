@@ -393,6 +393,21 @@
   border-radius: 0;
 }
 
+/* Кто запостил. min-height держит место, пока имя ещё загружается */
+.post-author {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 8px 1rem;
+  font-size: 0.9rem;
+}
+
+.post-author strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
 .post .form-error {
   padding: 0 1rem 0.75rem;
   text-align: left;
@@ -455,7 +470,10 @@
   border-top: 1px solid #e8e8ed;
 }
 
+/* Много комментариев не растянут карточку: внутри появляется прокрутка */
 .comment-list {
+  max-height: 260px;
+  overflow-y: auto;
   list-style: none;
   padding-top: 0.75rem;
 }
@@ -543,18 +561,25 @@
   font-size: clamp(2.5rem, 5vw, 4rem);
 }
 
-.album-home .gallery,
+.album-home .feed,
 .album-home .gallery-empty {
   width: 100%;
   margin-top: 1rem;
 }
 
-/* 6 фото ровно заполняют 3 колонки */
-.album-home .gallery {
+/* Сам блок выровнен по центру, а текст в карточках читается слева.
+   6 фото ровно заполняют 3 колонки. */
+.album-home .feed {
   grid-template-columns: repeat(3, 1fr);
+  text-align: left;
 }
 
 .album-home .gallery-empty {
+  background: var(--gray);
+}
+
+/* На белом фоне блока карточки нужно отделить от него */
+.album-home .post {
   background: var(--gray);
 }
 
@@ -622,8 +647,8 @@
     padding-bottom: 5rem;
   }
 
-  .album-home .gallery {
-    grid-template-columns: repeat(2, 1fr);
+  .album-home .feed {
+    grid-template-columns: 1fr;
   }
 
   .upload {
