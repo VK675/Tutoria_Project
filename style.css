@@ -112,8 +112,7 @@ img {
 }
 
 /* Секция, которая наезжает на предыдущую главу */
-.chapter + .chapter,
-.chapter + .plain {
+.chapter + .chapter {
   overflow: clip; /* clip, а не hidden — hidden сломал бы sticky */
 }
 
@@ -527,24 +526,7 @@ img {
   color: var(--muted);
 }
 
-/* ---------- Обычные секции ---------- */
-
-.plain {
-  position: relative;
-  background: var(--white);
-  min-height: 60vh;
-  padding: 7rem var(--side);
-  text-align: center;
-}
-
-/* Секции чередуются: белая, серая */
-.plain + .plain {
-  background: var(--gray);
-}
-
-.plain h2 {
-  font-size: clamp(2.5rem, 5vw, 4rem);
-}
+/* ---------- Плавное появление ---------- */
 
 .reveal {
   opacity: 0;
