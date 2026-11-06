@@ -31,6 +31,7 @@
         <input id="password" type="password" placeholder="Password" autocomplete="current-password" required>
         <button class="btn" type="submit">Sign in</button>
         <p id="login-error" class="form-error" role="alert"></p>
+        <p class="login-hint"><a href="privacy.html">Privacy</a></p>
       </div>
     </form>
 
@@ -55,7 +56,7 @@
         <p id="upload-status" class="upload-status" role="status"></p>
       </form>
 
-      <!-- Модерация: видна только админу (код в admin.js) -->
+      <!-- Модерация: видна только админу -->
       <div id="admin-section" class="admin" hidden>
         <h2>Waiting for approval</h2>
         <p id="admin-status" class="admin-status" role="status"></p>
@@ -64,7 +65,6 @@
 
       <div class="gallery-block">
         <h2>Photos</h2>
-        <!-- Сюда JS будет добавлять фото -->
         <div id="gallery" class="gallery"></div>
         <p id="gallery-empty" class="gallery-empty">No photos yet. Be the first to add one.</p>
         <button id="load-more" class="btn btn-quiet load-more" type="button" hidden>Load more</button>

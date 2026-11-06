@@ -649,10 +649,40 @@ footer {
   }
 }
 
-/* Если в системе включено «уменьшить анимацию» — без лишних эффектов */
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   [data-from], .reveal, .food-images img { transition: none; }
   .sticky { transform: none; }
   .scroll-hint { animation: none; }
+}
+
+.privacy {
+  max-width: 680px;           /* узкая колонка: длинные строки читать тяжело */
+  margin: 0 auto;             /* колонка по центру */
+  padding: 7rem var(--side) 4rem; /* сверху отступ, чтобы шапка не закрывала текст */
+}
+
+.privacy h1 {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  margin-bottom: 1rem;
+}
+
+.privacy h2 {
+  font-size: 1.25rem;
+  margin: 2.5rem 0 0.5rem;
+}
+
+.privacy p,
+.privacy ul {
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+}
+
+.privacy ul {
+  padding-left: 1.25rem;
+}
+
+.privacy a {
+  color: var(--accent);
 }
