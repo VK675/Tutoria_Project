@@ -20,8 +20,7 @@
   </header>
 
   <main>
-    <!-- Вход. hidden стоит сразу: форму покажет album.js, когда Firebase
-         проверит вход. Иначе вошедший пользователь видел бы её вспышку. -->
+    <!-- Вход. Открывается по ссылке Sign in, альбом виден и без него. -->
     <form id="login-form" class="login" hidden>
       <img class="login-bg" src="img/river.webp" alt="">
       <div class="login-card">
@@ -31,25 +30,49 @@
         <input id="password" type="password" placeholder="Password" autocomplete="current-password" required>
         <button class="btn" type="submit">Sign in</button>
         <p id="login-error" class="form-error" role="alert"></p>
-        <p class="login-hint"><a href="privacy.html">Privacy</a></p>
+        <p class="login-hint"><a href="#album-section">Back to the album</a> · <a href="privacy.html">Privacy</a></p>
       </div>
     </form>
 
-    <!-- Альбом: виден только после входа -->
+    <!-- Альбом виден всем. hidden стоит сразу: его покажет album.js, когда
+         Firebase проверит вход. Иначе кнопки успели бы мигнуть не те. -->
     <section id="album-section" class="album" hidden>
       <header class="album-head">
         <div>
           <p class="album-kicker">Class trip · Porto</p>
           <h1>Album</h1>
-          <p class="album-user">Signed in as <span id="user-email"></span></p>
+          <p id="album-user" class="album-user" hidden>Signed in as <span id="user-name"></span></p>
+          <p id="guest-hint" class="album-user" hidden>Sign in to like and comment.</p>
         </div>
-        <button id="sign-out" class="btn btn-quiet" type="button">Sign out</button>
+        <div class="album-buttons">
+          <a id="sign-in" class="btn btn-quiet" href="#sign-in" hidden>Sign in</a>
+          <button id="edit-profile" class="btn btn-quiet" type="button" hidden>Edit profile</button>
+          <button id="sign-out" class="btn btn-quiet" type="button" hidden>Sign out</button>
+        </div>
       </header>
 
-      <form id="upload-form" class="upload">
+      <form id="profile-form" class="profile" hidden>
+        <div id="profile-preview" class="profile-preview"></div>
+        <div class="profile-fields">
+          <h2>Your profile</h2>
+          <p>Your name and photo are shown to everyone next to your comments.</p>
+          <label>
+            Name
+            <input id="profile-name" type="text" maxlength="30" autocomplete="nickname" required>
+          </label>
+          <label>
+            Profile photo
+            <input id="profile-photo" type="file" accept="image/*">
+          </label>
+          <button class="btn" type="submit">Save</button>
+          <p id="profile-status" class="upload-status" role="status"></p>
+        </div>
+      </form>
+
+      <form id="upload-form" class="upload" hidden>
         <div class="upload-text">
           <h2>Add a photo</h2>
-          <p>It appears in the album after approval.</p>
+          <p>After approval everyone can see it, so only add people who agreed.</p>
         </div>
         <input id="photo-input" type="file" accept="image/*" required>
         <button class="btn" type="submit">Upload photo</button>
@@ -65,8 +88,8 @@
 
       <div class="gallery-block">
         <h2>Photos</h2>
-        <div id="gallery" class="gallery"></div>
-        <p id="gallery-empty" class="gallery-empty">No photos yet. Be the first to add one.</p>
+        <div id="gallery" class="feed"></div>
+        <p id="gallery-empty" class="gallery-empty" hidden>No photos yet.</p>
         <button id="load-more" class="btn btn-quiet load-more" type="button" hidden>Load more</button>
       </div>
     </section>

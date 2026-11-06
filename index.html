@@ -11,8 +11,9 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="album.css">
   <script src="script.js" defer></script>
-  <script type="module" src="firebase.js"></script>
+  <script type="module" src="home-album.js"></script>
 </head>
 <body>
 
@@ -25,7 +26,6 @@
       <a href="#map">Where</a>
       <a href="#history">History</a>
       <a href="#monuments">Monuments</a>
-      <a href="#food">Food</a>
       <a href="album.html">Album</a>
     </nav>
   </header>
@@ -157,33 +157,13 @@
       </div>
     </section>
 
-    <!-- 4. Еда: блюда сменяют друг друга -->
-    <section id="food" class="chapter food" data-scroll>
-      <div class="sticky">
-        <div class="food-images">
-          <img src="img/francesinha.jpg" alt="Francesinha" data-from="0"    data-to="0.33">
-          <img src="img/tripas.jpg"      alt="Tripas à moda do Porto" data-from="0.33" data-to="0.66">
-          <img src="img/bacalhau.jpg"    alt="Bacalhau à Gomes de Sá" data-from="0.66">
-        </div>
-        <div class="food-texts">
-          <p class="kicker">3 dishes you must try</p>
-          <div class="dish" data-from="0" data-to="0.33">
-            <span class="num">01</span>
-            <h3>Francesinha</h3>
-            <p>“Little French girl”: a huge sandwich with meat, ham and sausage, covered in melted cheese and a hot beer-and-tomato sauce. Usually with fries.</p>
-          </div>
-          <div class="dish" data-from="0.33" data-to="0.66">
-            <span class="num">02</span>
-            <h3>Tripas à moda do Porto</h3>
-            <p>Tripe stew with white beans — the dish that gave locals their nickname, “tripeiros”.</p>
-          </div>
-          <div class="dish" data-from="0.66">
-            <span class="num">03</span>
-            <h3>Bacalhau à Gomes de Sá</h3>
-            <p>Salted cod with potatoes, onion, eggs and olives. It was invented in Porto by a cod merchant called Gomes de Sá.</p>
-          </div>
-        </div>
-      </div>
+    <!-- 4. Альбом: несколько фото класса, остальное на album.html -->
+    <section id="album" class="album-home">
+      <p class="kicker reveal">Class album</p>
+      <h2 class="reveal">The trip, in our photos</h2>
+      <div id="home-gallery" class="gallery"></div>
+      <p id="home-empty" class="gallery-empty" hidden>No photos yet. They will appear here after the trip.</p>
+      <a class="btn" href="album.html">Open the album</a>
     </section>
 
     <section id="final" class="final">
@@ -202,9 +182,6 @@
         <li>Old town, Cathedral — Jakub Hałun, CC BY 4.0</li>
         <li>Dom Luís I Bridge, Clérigos Tower — Diego Delso, CC BY-SA</li>
         <li>Livraria Lello, São Bento — John Samuel, CC BY-SA 4.0</li>
-        <li>Francesinha — DgOlsen, CC BY-SA 4.0</li>
-        <li>Tripas — MariaCartas, CC BY-SA 3.0</li>
-        <li>Bacalhau à Gomes de Sá — Adriao, CC BY-SA 3.0</li>
       </ul>
     </details>
   </footer>

@@ -1,7 +1,12 @@
 import { auth, db } from "./firebase.js";
+import { compressImage } from "./image.js";
+import { showProfile } from "./profile.js";
+import { createComments, createLikeButton, deletePhoto } from "./social.js";
 import {
   addDoc,
   collection,
+  doc,
+  getDoc,
   getDocs,
   limit,
   query,
@@ -21,21 +26,69 @@ const album = document.getElementById("album-section");
 const gallery = document.getElementById("gallery");
 const galleryEmpty = document.getElementById("gallery-empty");
 const loadMoreButton = document.getElementById("load-more");
+const signInLink = document.getElementById("sign-in");
+const signOutButton = document.getElementById("sign-out");
+const userLine = document.getElementById("album-user");
+const guestHint = document.getElementById("guest-hint");
+const uploadForm = document.getElementById("upload-form");
+const photoInput = document.getElementById("photo-input");
+const uploadStatus = document.getElementById("upload-status");
 
 const PAGE_SIZE = 12; // сколько фото грузим за раз: экономим лимит трафика Firestore
 let lastPhoto = null; // последнее загруженное фото: следующая порция начнётся после него
 
-onAuthStateChanged(auth, function (user) {
-  // Очищаем при любой смене пользователя: после выхода фото не должны остаться на странице
-  resetGallery();
+// Кто смотрит страницу: uid и роль guest, member или admin
+let viewer = { uid: null, role: "guest" };
 
-  if (user) {
-    document.getElementById("user-email").textContent = user.email;
-    loadGallery();
+onAuthStateChanged(auth, async function (user) {
+  const uid = user?.uid ?? null;
+  viewer = { uid: uid, role: "guest" };
+
+  const role = await getRole(user);
+
+  // Пока ждали ответ, пользователь мог смениться: тогда этот ответ устарел
+  if (viewer.uid !== uid) return;
+  viewer.role = role;
+
+  if (user !== null) {
+    form.reset(); // пароль не должен оставаться в поле
+    history.replaceState(null, "", location.pathname);
   }
-  form.hidden = user !== null;
-  album.hidden = user === null;
+
+  signInLink.hidden = user !== null;
+  guestHint.hidden = user !== null;
+  signOutButton.hidden = user === null;
+  userLine.hidden = user === null;
+  uploadForm.hidden = user === null;
+  uploadStatus.textContent = ""; // сообщение прошлого пользователя здесь ни к чему
+  showProfile(user);
+
+  showPage();
+  resetGallery();
+  loadGallery();
 });
+
+// Только для интерфейса: настоящую защиту дают правила в firestore.rules
+async function getRole(user) {
+  if (user === null) return "guest";
+
+  try {
+    const adminDoc = await getDoc(doc(db, "admins", user.uid));
+    return adminDoc.exists() ? "admin" : "member";
+  } catch (error) {
+    console.log(error.code, error.message);
+    return "member";
+  }
+}
+
+// Форму входа показываем только по ссылке Sign in, альбом виден всем
+function showPage() {
+  const showLogin = location.hash === "#sign-in" && viewer.uid === null;
+  form.hidden = !showLogin;
+  album.hidden = showLogin;
+}
+
+window.addEventListener("hashchange", showPage);
 
 form.addEventListener("submit", async function (event) {
   event.preventDefault();
@@ -45,26 +98,16 @@ form.addEventListener("submit", async function (event) {
   const password = document.getElementById("password").value;
 
   try {
-    const result = await signInWithEmailAndPassword(auth, email, password);
-    console.log("Signed in as", result.user.email);
+    await signInWithEmailAndPassword(auth, email, password);
   } catch (error) {
     errorText.textContent = "Wrong email or password";
     console.log(error.code);
   }
 });
 
-
-
-
-document.getElementById("sign-out").addEventListener("click", function () {
+signOutButton.addEventListener("click", function () {
   signOut(auth);
 });
-
-
-
-const uploadForm = document.getElementById("upload-form");
-const photoInput = document.getElementById("photo-input");
-const uploadStatus = document.getElementById("upload-status");
 
 uploadForm.addEventListener("submit", async function (event) {
   event.preventDefault();
@@ -95,24 +138,12 @@ uploadForm.addEventListener("submit", async function (event) {
   }
 });
 
-async function compressImage(file) {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
-
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-
-  return canvas.toDataURL("image/jpeg", 0.8);
-}
-
 function resetGallery() {
   gallery.replaceChildren();
   lastPhoto = null;
   loadMoreButton.hidden = true;
-  galleryEmpty.textContent = "No photos yet. Be the first to add one.";
-  galleryEmpty.hidden = false;
+  galleryEmpty.textContent = "No photos yet.";
+  galleryEmpty.hidden = true; // покажем, только когда база ответит, что фото нет
 }
 
 async function loadGallery() {
@@ -127,7 +158,7 @@ async function loadGallery() {
     const snapshot = await getDocs(query(collection(db, "photos"), ...filters));
 
     snapshot.forEach(function (photoDoc) {
-      gallery.append(createPhoto(photoDoc));
+      gallery.append(createPost(photoDoc));
     });
 
     if (!snapshot.empty) {
@@ -146,16 +177,66 @@ async function loadGallery() {
   loadMoreButton.disabled = false;
 }
 
-function createPhoto(photoDoc) {
-  const figure = document.createElement("figure");
-  figure.className = "photo";
-
+// Карточка: фото, кнопки и раскрывающиеся комментарии
+function createPost(photoDoc) {
   const image = document.createElement("img");
   image.src = photoDoc.data().image;
   image.alt = "Trip photo";
 
+  const figure = document.createElement("figure");
+  figure.className = "photo";
   figure.append(image);
-  return figure;
+
+  const post = document.createElement("article");
+  post.className = "post";
+
+  const errorLine = document.createElement("p");
+  errorLine.className = "form-error";
+  errorLine.setAttribute("role", "alert");
+
+  function showError(message) {
+    errorLine.textContent = message;
+  }
+
+  const comments = createComments(photoDoc.ref, viewer, showError);
+
+  const actions = document.createElement("div");
+  actions.className = "post-actions";
+  actions.append(createLikeButton(photoDoc.ref, showError), comments.toggle);
+
+  if (viewer.role === "admin") {
+    actions.append(createDeleteButton(photoDoc.ref, post, showError));
+  }
+
+  post.append(figure, actions, errorLine, comments.panel);
+  return post;
+}
+
+function createDeleteButton(photoRef, post, showError) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "post-action post-delete";
+  button.textContent = "Delete";
+
+  button.addEventListener("click", async function () {
+    // Удаление нельзя отменить, поэтому спрашиваем
+    if (!confirm("Delete this photo with its likes and comments for good?")) return;
+
+    button.disabled = true;
+    showError("");
+
+    try {
+      await deletePhoto(photoRef);
+      post.remove();
+      galleryEmpty.hidden = gallery.children.length > 0;
+    } catch (error) {
+      button.disabled = false;
+      showError("Could not delete the photo, please try again");
+      console.log(error.code, error.message);
+    }
+  });
+
+  return button;
 }
 
 loadMoreButton.addEventListener("click", loadGallery);

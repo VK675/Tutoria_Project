@@ -7,21 +7,60 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
+    // Участник — тот, кто вошёл по email и паролю. Такие аккаунты создаются
+    // только вручную в консоли: регистрация на сайте выключена. Проверка провайдера
+    // не пустит анонимных посетителей, даже если анонимный вход случайно включат.
+    function isMember() {
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider == "password";
+    }
+
+    function isApproved(photoId) {
+      return get(/databases/$(database)/documents/photos/$(photoId)).data.status == "approved";
+    }
+
+    // Только встроенный JPEG: ссылка на чужой сервер сюда не пройдёт
+    function isJpeg(value, maxSize) {
+      return value is string
+        && value.size() <= maxSize
+        && value[0:23] == "data:image/jpeg;base64,";
+    }
+
     // Читать можно только свою запись. Правил на запись нет:
     // стать админом можно только через консоль Firebase.
     match /admins/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
     }
 
-    match /photos/{photoId} {
-      allow read: if request.auth != null
-        && (resource.data.status == "approved"
-            || resource.data.userId == request.auth.uid
-            || isAdmin());
+    // Имя и аватар видны всем рядом с комментариями, но только по одному (get).
+    // Выгрузить список всех участников (list) нельзя никому.
+    match /profiles/{userId} {
+      allow get: if true;
 
-      allow create: if request.auth != null
+      allow create, update: if isMember()
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(["name", "avatar"])
+        && request.resource.data.name is string
+        && request.resource.data.name.trim().size() >= 1
+        && request.resource.data.name.size() <= 30
+        && (!("avatar" in request.resource.data) || isJpeg(request.resource.data.avatar, 60000));
+
+      allow delete: if request.auth != null
+        && (request.auth.uid == userId || isAdmin());
+    }
+
+    match /photos/{photoId} {
+      // Одобренные фото видны всем, даже без входа
+      allow read: if resource.data.status == "approved"
+        || (request.auth != null
+            && (resource.data.userId == request.auth.uid || isAdmin()));
+
+      allow create: if isMember()
+        && request.resource.data.keys().hasOnly(["image", "userId", "status", "createdAt"])
         && request.resource.data.userId == request.auth.uid
-        && request.resource.data.status == "pending";
+        && request.resource.data.status == "pending"
+        && request.resource.data.createdAt == request.time
+        && isJpeg(request.resource.data.image, 1000000);
 
       // Админ может только поменять статус на approved, остальные поля — нет
       allow update: if isAdmin()
@@ -29,6 +68,39 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["status"]);
 
       allow delete: if isAdmin();
+
+      // Лайк — это документ с UID в качестве имени, поэтому второй раз
+      // тот же человек лайкнуть не может. Гости видят лайки, но не ставят.
+      match /likes/{userId} {
+        allow read: if true;
+
+        allow create: if isMember()
+          && request.auth.uid == userId
+          && request.resource.data.keys().hasOnly(["createdAt"])
+          && request.resource.data.createdAt == request.time
+          && isApproved(photoId);
+
+        allow delete: if request.auth != null
+          && (request.auth.uid == userId || isAdmin());
+      }
+
+      // Читать комментарии могут все, писать только участники
+      match /comments/{commentId} {
+        allow read: if true;
+
+        allow create: if isMember()
+          && request.resource.data.keys().hasOnly(["text", "userId", "createdAt"])
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.text is string
+          && request.resource.data.text.trim().size() >= 1
+          && request.resource.data.text.size() <= 500
+          && isApproved(photoId);
+
+        // Редактировать нельзя, только удалить: своё или, для админа, любое
+        allow delete: if request.auth != null
+          && (resource.data.userId == request.auth.uid || isAdmin());
+      }
     }
   }
 }

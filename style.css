@@ -454,78 +454,6 @@ img {
   color: var(--muted);
 }
 
-/* ---------- 4. Еда ---------- */
-
-.food {
-  background: var(--white);
-  color: var(--ink);
-}
-
-.food .sticky {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  gap: 4vw;
-  padding: 48px var(--side) 0;
-}
-
-.food-images {
-  position: relative;
-  height: 72vh;
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-.food-images img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transform: scale(1.08); /* у картинок свой эффект — не съезжают вниз, а «отдаляются» */
-  transition: opacity 1s var(--ease), transform 1.4s var(--ease);
-}
-
-.food-images img.active,
-.food-images img.past {
-  transform: scale(1);
-}
-
-.food-texts {
-  position: relative;
-  height: 72vh;
-}
-
-.food-texts .kicker {
-  position: absolute;
-  top: 0;
-}
-
-.dish {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.dish .num {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--accent);
-}
-
-.dish h3 {
-  font-size: clamp(2.2rem, 4vw, 3.5rem);
-  margin: 0.4rem 0 1rem;
-}
-
-.dish p {
-  font-size: 1.15rem;
-  max-width: 30rem;
-  color: var(--muted);
-}
-
 /* ---------- Плавное появление ---------- */
 
 .reveal {
@@ -613,22 +541,6 @@ footer {
     --frame-side: 6vw;
   }
 
-  .food .sticky {
-    grid-template-columns: 1fr;
-    grid-template-rows: 40vh 1fr;
-    gap: 1rem;
-    padding-top: 64px;
-    padding-bottom: 1rem;
-  }
-
-  .food-images {
-    height: 100%;
-  }
-
-  .food-texts {
-    height: 100%;
-  }
-
   .history-content {
     padding-left: var(--side);
   }
@@ -652,7 +564,7 @@ footer {
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  [data-from], .reveal, .food-images img { transition: none; }
+  [data-from], .reveal { transition: none; }
   .sticky { transform: none; }
   .scroll-hint { animation: none; }
 }
